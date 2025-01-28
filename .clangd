@@ -1,0 +1,7 @@
+CompileFlags:
+    CompilationDatabase: out/debug/
+    Add: [
+        -std=c23,
+        -xc,
+    ]
+    Compiler: clang
