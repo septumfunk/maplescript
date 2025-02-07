@@ -1,5 +1,6 @@
 #include "hashmap.h"
-#include "../memory/alloc.h"
+#include "../memory/mem.h"
+#include "string.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -85,13 +86,36 @@ ms_key_value *ms_hashmap_insert(ms_hashmap *self, ms_string key, void *value) {
         ms_hashmap_remove(self, key);
 
     uint32_t hash = ms_fnv1a(key.c_str, key.length, SEED) & (self->bucket_count - 1);
-    self->buckets[hash] = ms_push_kv(self->buckets[hash], ms_key_value *new)
+    self->buckets[hash] = ms_push_kv(self->buckets[hash], &(ms_key_value){ key, value });
+
+    return self->buckets[hash];
 }
 
 ms_key_value *ms_hashmap_get(ms_hashmap *self, ms_string key) {
+    uint32_t hash = ms_fnv1a(key.c_str, key.length, SEED) & (self->bucket_count - 1);
 
+    ms_key_value *seek = self->buckets[hash];
+    while (seek) {
+        if (ms_string_compare(key, seek->key))
+            break;
+        seek = seek->next;
+    }
+
+    return seek;
 }
 
 void ms_hashmap_remove(ms_hashmap *self, ms_string key) {
+    uint32_t hash = ms_fnv1a(key.c_str, key.length, SEED) & (self->bucket_count - 1);
 
+    ms_key_value *seek = self->buckets[hash];
+    ms_key_value *seek_p = nullptr;
+    while (seek) {
+        if (ms_string_compare(key, seek->key)) {
+            if (seek_p)
+                seek_p->next = seek->next;
+            free(seek);
+        }
+        seek_p = seek;
+        seek = seek->next;
+    }
 }

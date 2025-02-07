@@ -14,3 +14,7 @@ add_link_options("-fsanitize=address,undefined" "-fno-sanitize=leak")
 add_executable(${PROJECT_NAME}
     src/main.c
 )
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    include
+)
