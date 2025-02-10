@@ -8,9 +8,9 @@
 /// elements in it.
 typedef struct {
     size_t const element_size; /// The size of an individual element in the vector.
-    uint64_t slot_count; /// The amount of currently available slots.
-    uint64_t slots_used;
-    uint8_t *data;
+    uint64_t slots; /// The amount of currently available slots.
+    uint64_t count; /// The amount of currently used slots.
+    uint8_t *data; /// A series of sequential bytes representing vector elements.
 } ms_vector;
 
 /// Creates a new vector with a specified element size.
@@ -22,7 +22,7 @@ void ms_vector_push(ms_vector *self, void *data);
 /// Copies and then removes the last vector element, returning a pointer to its copy on the heap.
 void *ms_vector_pop(ms_vector *self);
 /// Copies an element into the vector at a specified index, pushing all other elements forward.
-void ms_vector_insert(ms_vector *self, uint64_t index);
+void ms_vector_insert(ms_vector *self, uint64_t index, void *data);
 /// Gets a value from the vector, returning a pointer to it.
 /// This pointer may only be valid until the next vector operation is executed,
 /// as a vector's data may not always stay in the same place.

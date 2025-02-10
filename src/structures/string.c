@@ -1,4 +1,5 @@
-#include <maplescript/
+#include "string.h"
+#include "../memory/mem.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
