@@ -28,7 +28,7 @@ ms_hashmap ms_hashmap_new(void) {
     };
 }
 
-void ms_hashmap_free(ms_hashmap *self) {
+void ms_hashmap_delete(ms_hashmap *self) {
     ms_hashmap_clear(self);
     free(self->buckets);
 }
@@ -41,7 +41,7 @@ void ms_hashmap_clear(ms_hashmap *self) {
 
         while (pair) {
             next = pair->next;
-            ms_string_free(&pair->key);
+            ms_string_delete(&pair->key);
             free(pair->value.pointer);
             pair = next;
         }

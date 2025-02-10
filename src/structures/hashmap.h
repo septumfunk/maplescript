@@ -21,7 +21,7 @@ typedef struct ms_hashmap {
 } ms_hashmap;
 
 ms_hashmap ms_hashmap_new(void);
-void ms_hashmap_free(ms_hashmap *self);
+void ms_hashmap_delete(ms_hashmap *self);
 void ms_hashmap_clear(ms_hashmap *self);
 
 ms_key_value *ms_hashmap_insert(ms_hashmap *self, ms_string key, void *value);

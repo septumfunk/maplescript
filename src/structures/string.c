@@ -31,7 +31,7 @@ ms_string ms_string_format(const char *format, ...) {
     };
 }
 
-void ms_string_free(ms_string *self) {
+void ms_string_delete(ms_string *self) {
     free(self->c_str);
     self->length = 0;
 }

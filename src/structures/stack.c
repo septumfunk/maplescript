@@ -13,7 +13,7 @@ ms_stack ms_stack_new(size_t element_size) {
     };
 }
 
-void ms_stack_free(ms_stack *self) {
+void ms_stack_delete(ms_stack *self) {
     free(self->top);
 }
 
