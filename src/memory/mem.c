@@ -4,19 +4,19 @@
 #include <string.h>
 
 void *ms_malloc(size_t size) {
-    void *block = ms_malloc(size);
+    void *block = malloc(size);
     assert(block && "Failed to malloc memory block.");
     return block;
 }
 
 void *ms_calloc(size_t size, uint64_t count) {
-    void *block = ms_calloc(size, count);
+    void *block = calloc(size, count);
     assert(block && "Failed to calloc memory block.");
     return block;
 }
 
 void *ms_realloc(void *block, size_t size) {
-    void *new_block = ms_realloc(block, size);
+    void *new_block = realloc(block, size);
     assert(new_block && "Failed to reallocate memory block.");
     return new_block;
 }

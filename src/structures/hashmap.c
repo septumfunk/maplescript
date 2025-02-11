@@ -1,7 +1,9 @@
 #include "hashmap.h"
 #include "../memory/mem.h"
 #include "string.h"
+#include "stringext.h"
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define PRIME 0x01000193
@@ -15,53 +17,54 @@ ms_key_value *ms_push_kv(ms_key_value *list, ms_key_value *new) {
 uint32_t ms_fnv1a(const void *data, size_t size, uint32_t hash) {
     assert(data);
     const unsigned char *head = data;
-    while (size--)
-        hash = (*head++ ^ hash) * PRIME;
+    while (size--) {
+        auto cc = *head++;
+        hash = (cc ^ hash) * PRIME;
+    }
     return hash;
 }
 
-ms_hashmap ms_hashmap_new(void) {
-    return (ms_hashmap) {
-        .bucket_count = MS_HASHMAP_DEFAULT_BUCKETS,
+ms_map ms_map_new(void) {
+    return (ms_map) {
+        .bucket_count = MS_MAP_DEFAULT_BUCKETS,
         .pair_count = 0,
-        .buckets = ms_calloc(sizeof(ms_key_value *), MS_HASHMAP_DEFAULT_BUCKETS),
+        .buckets = ms_calloc(sizeof(ms_key_value *), MS_MAP_DEFAULT_BUCKETS),
     };
 }
 
-void ms_hashmap_delete(ms_hashmap *self) {
-    ms_hashmap_clear(self);
+void ms_map_delete(ms_map *self) {
+    ms_map_clear(self);
     free(self->buckets);
 }
 
-void ms_hashmap_clear(ms_hashmap *self) {
-    for (int i = 0; i < self->bucket_count; ++i) {
+void ms_map_clear(ms_map *self) {
+    for (uint64_t i = 0; i < self->bucket_count; ++i) {
         ms_key_value *pair = self->buckets[i];
         ms_key_value *next = nullptr;
         self->buckets[i] = nullptr;
 
         while (pair) {
             next = pair->next;
-            ms_string_delete(&pair->key);
-            free(pair->value.pointer);
+            free((char *)pair->key);
+            free((void *)pair->value.pointer);
             pair = next;
         }
     }
 
-    if (self->bucket_count > MS_HASHMAP_DEFAULT_BUCKETS) {
-        self->bucket_count = MS_HASHMAP_DEFAULT_BUCKETS;
+    if (self->bucket_count > MS_MAP_DEFAULT_BUCKETS) {
+        self->bucket_count = MS_MAP_DEFAULT_BUCKETS;
         self->buckets = ms_realloc(self->buckets, self->bucket_count);
     }
 }
 
-double ms_hashmap_load(ms_hashmap *self, uint64_t bucket_count) {
-    return (float)self->pair_count / (float)bucket_count;
+double ms_map_load(ms_map *self, uint64_t bucket_count) {
+    return (double)self->pair_count / (double)bucket_count;
 }
 
-void ms_hashmap_rehash(ms_hashmap *self, uint64_t new_bucket_count) {
+void ms_map_rehash(ms_map *self, uint64_t new_bucket_count) {
     ms_key_value *pairs = nullptr;
-    for (int i = 0; i < self->bucket_count; ++i) {
+    for (uint64_t i = 0; i < self->bucket_count; ++i) {
         ms_key_value *pair = self->buckets[i];
-        ms_key_value *next = nullptr;
         self->buckets[i] = nullptr;
 
         while (pair) {
@@ -76,41 +79,54 @@ void ms_hashmap_rehash(ms_hashmap *self, uint64_t new_bucket_count) {
     self->bucket_count = new_bucket_count;
     self->buckets = ms_realloc(self->buckets, self->bucket_count);
     while (pairs) {
-        uint32_t hash = ms_fnv1a(pairs->key.c_str, pairs->key.length, SEED) & (self->bucket_count - 1);
+        uint32_t hash = ms_fnv1a(pairs->key, strlen(pairs->key), SEED) & (self->bucket_count - 1);
         self->buckets[hash] = ms_push_kv(self->buckets[hash], pairs);
     }
 }
 
-ms_key_value *ms_hashmap_insert(ms_hashmap *self, ms_string key, void *value) {
-    if (ms_hashmap_get(self, key))
-        ms_hashmap_remove(self, key);
+void _ms_map_insert(ms_map *self, const char *key, void *value, size_t size) {
+    if (ms_map_exists(self, key))
+        ms_map_remove(self, key);
 
-    uint32_t hash = ms_fnv1a(key.c_str, key.length, SEED) & (self->bucket_count - 1);
-    self->buckets[hash] = ms_push_kv(self->buckets[hash], &(ms_key_value){ key, value });
+    void *value_copy = ms_malloc(size);
+    memcpy(value_copy, value, size);
 
-    return self->buckets[hash];
+    uint32_t hash = ms_fnv1a(key, strlen(key), SEED) & (self->bucket_count - 1);
+    ms_key_value *pair = ms_malloc(sizeof(ms_key_value));
+    memcpy(pair, &(ms_key_value) {
+        .key = ms_strdup(key),
+        .value = {
+            .pointer = value_copy,
+            .size = size
+        },
+    }, sizeof(ms_key_value));
+    self->buckets[hash] = ms_push_kv(self->buckets[hash], pair);
 }
 
-ms_key_value *ms_hashmap_get(ms_hashmap *self, ms_string key) {
-    uint32_t hash = ms_fnv1a(key.c_str, key.length, SEED) & (self->bucket_count - 1);
+const void *_ms_map_get(ms_map *self, const char *key) {
+    uint32_t hash = ms_fnv1a(key, strlen(key), SEED) & (self->bucket_count - 1);
 
     ms_key_value *seek = self->buckets[hash];
     while (seek) {
-        if (ms_string_compare(key, seek->key))
+        printf("%s\n", key);
+        printf("%s\n", seek->key);
+        if (ms_strcmp(key, seek->key))
             break;
         seek = seek->next;
     }
 
-    return seek;
+    assert(seek != nullptr);
+
+    return seek->value.pointer;
 }
 
-void ms_hashmap_remove(ms_hashmap *self, ms_string key) {
-    uint32_t hash = ms_fnv1a(key.c_str, key.length, SEED) & (self->bucket_count - 1);
+void ms_map_remove(ms_map *self, const char *key) {
+    uint32_t hash = ms_fnv1a(key, strlen(key), SEED) & (self->bucket_count - 1);
 
     ms_key_value *seek = self->buckets[hash];
     ms_key_value *seek_p = nullptr;
     while (seek) {
-        if (ms_string_compare(key, seek->key)) {
+        if (ms_strcmp(key, seek->key)) {
             if (seek_p)
                 seek_p->next = seek->next;
             free(seek);
@@ -118,4 +134,16 @@ void ms_hashmap_remove(ms_hashmap *self, ms_string key) {
         seek_p = seek;
         seek = seek->next;
     }
+}
+
+bool ms_map_exists(ms_map *self, const char *key) {
+    uint32_t hash = ms_fnv1a(key, strlen(key), SEED) & (self->bucket_count - 1);
+    ms_key_value *seek = self->buckets[hash];
+    while (seek) {
+        if (ms_strcmp(key, seek->key))
+            break;
+        seek = seek->next;
+    }
+
+    return seek ? true : false;
 }

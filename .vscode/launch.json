@@ -1,16 +1,14 @@
 {
     "configurations": [
         {
-            "type": "lldb",
+            "type": "cppvsdbg",
             "request": "launch",
             "name": "Launch (Debug)",
             "preLaunchTask": "CMake: configure and build",
 
             "cwd": "${workspaceRoot}",
             "program": "${workspaceRoot}/out/debug/${fileWorkspaceFolderBasename}",
-            "env": {
-                "ASAN_OPTIONS": "detect_leaks=0", // Disable LeakSanitizer for debugging
-            },
+
         },
     ]
 }
