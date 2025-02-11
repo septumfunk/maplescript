@@ -1,7 +1,6 @@
-#include "hashmap.h"
+#include "map.h"
 #include "../memory/mem.h"
-#include "string.h"
-#include "stringext.h"
+#include "strings.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

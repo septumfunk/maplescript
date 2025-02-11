@@ -1,4 +1,4 @@
-#include "vector.h"
+#include "vec.h"
 #include "../memory/mem.h"
 #include <assert.h>
 #include <stdio.h>
@@ -52,7 +52,12 @@ void ms_vec_insert(ms_vec *self, uint64_t index, void *data) {
         return;
     }
 
-    memmove(self->data + (index + 1) * self->element_size, self->data + index * self->element_size, self->element_size * (self->count - index - 1));
+    memcpy(self->data + (index + 1) * self->element_size, self->data + index * self->element_size, self->element_size * (self->count - index - 1));
+    memcpy(self->data + index * self->element_size, data, self->element_size);
+}
+
+void ms_vec_set(ms_vec *self, uint64_t index, void *data) {
+    assert(index < self->count);
     memcpy(self->data + index * self->element_size, data, self->element_size);
 }
 
@@ -61,6 +66,11 @@ const void *_ms_vec_get(ms_vec *self, uint64_t index) {
     return self->data + index * self->element_size;
 }
 
-/*void ms_vec_remove(ms_vec *self, uint64_t index) {
-    // TODO
-}*/
+void ms_vec_remove(ms_vec *self, uint64_t index) {
+    assert(index < self->count);
+    self->count--;
+    if (self->count - index > 0)
+        memcpy(self->data + index * self->element_size, self->data + (index + 1) * self->element_size, self->count - index);
+    if (self->slots > MS_VEC_INITIAL_SIZE && self->count <= self->slots / 2) // Reduce size if possible
+        self->data = ms_realloc(self->data, self->slots /= 2);
+}

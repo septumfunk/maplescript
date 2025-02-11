@@ -1,4 +1,4 @@
-#include "stringext.h"
+#include "strings.h"
 #include "../memory/mem.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -7,11 +7,10 @@
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
 
 char *ms_strdup(const char *string) {
-    #ifdef _WIN32
-        return _strdup(string);
-    #else
-        return strdup(string);
-    #endif
+    auto len = strlen(string) + 1; // Include terminator
+    char *new_string = ms_malloc(len);
+    memcpy(new_string, string, len);
+    return new_string;
 }
 
 char *ms_format(const char *format, ...) {

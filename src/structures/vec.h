@@ -22,8 +22,10 @@ void ms_vec_delete(ms_vec *self);
 void ms_vec_push(ms_vec *self, void *data);
 /// Copies and then removes the last vec element, returning a pointer to its copy on the heap.
 void *ms_vec_pop(ms_vec *self);
-/// Copies an element into the vec at a specified index, pushing all other elements forward.
+/// Copies an element into the vec at a specified index, shifting all elements after it forward.
 void ms_vec_insert(ms_vec *self, uint64_t index, void *data);
+/// Sets the value of an index of the vec directly.
+void ms_vec_set(ms_vec *self, uint64_t index, void *data);
 /// Gets a value from the vec, returning a pointer to it.
 /// This pointer may only be valid until the next vec operation is executed,
 /// as a vec's data may not always stay in the same place.

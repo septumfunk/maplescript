@@ -9,9 +9,9 @@ add_executable(${PROJECT_NAME}
 
     src/memory/mem.c
 
-    src/structures/hashmap.c
-    src/structures/stringext.c
-    src/structures/vector.c
+    src/structures/map.c
+    src/structures/strings.c
+    src/structures/vec.c
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
