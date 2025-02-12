@@ -20,6 +20,8 @@ ms_vec _ms_vec_new(size_t element_size);
 void ms_vec_delete(ms_vec *self);
 /// Copies an element to the end of a vec.
 void ms_vec_push(ms_vec *self, void *data);
+/// Copies an array of elements to the end of a vec.
+void ms_vec_append(ms_vec *self, void *data, uint64_t count);
 /// Copies and then removes the last vec element, returning a pointer to its copy on the heap.
 void *ms_vec_pop(ms_vec *self);
 /// Copies an element into the vec at a specified index, shifting all elements after it forward.

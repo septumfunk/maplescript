@@ -9,8 +9,8 @@ void *ms_malloc(size_t size) {
     return block;
 }
 
-void *ms_calloc(size_t size, uint64_t count) {
-    void *block = calloc(size, count);
+void *ms_calloc(uint64_t count, size_t size) {
+    void *block = calloc(count, size);
     assert(block && "Failed to calloc memory block.");
     return block;
 }

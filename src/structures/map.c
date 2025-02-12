@@ -25,9 +25,9 @@ uint32_t ms_fnv1a(const void *data, size_t size, uint32_t hash) {
 
 ms_map ms_map_new(void) {
     return (ms_map) {
-        .bucket_count = MS_MAP_DEFAULT_BUCKETS,
+        .bucket_count = 0,
         .pair_count = 0,
-        .buckets = ms_calloc(sizeof(ms_key_value *), MS_MAP_DEFAULT_BUCKETS),
+        .buckets = nullptr,
     };
 }
 
@@ -84,6 +84,11 @@ void ms_map_rehash(ms_map *self, uint64_t new_bucket_count) {
 }
 
 void _ms_map_insert(ms_map *self, const char *key, void *value, size_t size) {
+    if (!self->buckets || self->bucket_count) {
+        self->buckets = ms_calloc(MS_MAP_DEFAULT_BUCKETS, sizeof(ms_key_value *));
+        self->bucket_count = MS_MAP_DEFAULT_BUCKETS;
+    }
+
     if (ms_map_exists(self, key))
         ms_map_remove(self, key);
 
@@ -103,6 +108,7 @@ void _ms_map_insert(ms_map *self, const char *key, void *value, size_t size) {
 }
 
 const void *_ms_map_get(ms_map *self, const char *key) {
+    assert(self->buckets && "Map is not initialized.");
     uint32_t hash = ms_fnv1a(key, strlen(key), SEED) & (self->bucket_count - 1);
 
     ms_key_value *seek = self->buckets[hash];
@@ -114,7 +120,7 @@ const void *_ms_map_get(ms_map *self, const char *key) {
         seek = seek->next;
     }
 
-    assert(seek != nullptr);
+    assert(seek != nullptr && "Map entry does not exist.");
 
     return seek->value.pointer;
 }
