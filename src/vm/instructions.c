@@ -9,7 +9,7 @@ const ms_instruction MS_INSTRUCTION_SET[MS_OP_COUNT] = {
         .operands = {
             .count = 1,
             .array = (ms_operand[]) {
-                (ms_operand) { .asm_name = "ofs", .size = sizeof(MS_POINTER) },
+                (ms_operand) { .asm_name = "ofs", .size = sizeof(ms_pointer) },
             },
         },
     },
@@ -19,8 +19,8 @@ const ms_instruction MS_INSTRUCTION_SET[MS_OP_COUNT] = {
         .operands = {
             .count = 2,
             .array = (ms_operand[]) {
-                (ms_operand) { .asm_name = "n1", .size = sizeof(MS_NUMBER) },
-                (ms_operand) { .asm_name = "n2", .size = sizeof(MS_NUMBER) },
+                (ms_operand) { .asm_name = "n1", .size = sizeof(ms_number) },
+                (ms_operand) { .asm_name = "n2", .size = sizeof(ms_number) },
             },
         },
     },
@@ -30,8 +30,8 @@ const ms_instruction MS_INSTRUCTION_SET[MS_OP_COUNT] = {
         .operands = {
             .count = 2,
             .array = (ms_operand[]) {
-                (ms_operand) { .asm_name = "n1", .size = sizeof(MS_NUMBER) },
-                (ms_operand) { .asm_name = "n2", .size = sizeof(MS_NUMBER) },
+                (ms_operand) { .asm_name = "n1", .size = sizeof(ms_number) },
+                (ms_operand) { .asm_name = "n2", .size = sizeof(ms_number) },
             },
         },
     },

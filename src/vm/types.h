@@ -1,5 +1,5 @@
 #pragma once
 #include <stdint.h>
 
-typedef float MS_NUMBER;
-typedef uint64_t MS_POINTER;
+typedef float ms_number;
+typedef uint64_t ms_pointer;

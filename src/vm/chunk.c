@@ -32,7 +32,7 @@ void ms_chunk_save(ms_chunk *self, const char *path) {
         .version = MS_BYTECODE_VERSION,
         .loc_constants = /*sizeof(ms_chunk_info)*/ 0,
         .loc_bytecode = sizeof(ms_chunk_info),
-    }, sizeof(ms_chunk_info), 1, f);
+    }, sizeof(uint8_t), sizeof(ms_chunk_info), f);
     if (written != sizeof(ms_chunk_info)) {
         fprintf(stderr, "Failed to write chunk info to file '%s'", path);
         fclose(f);
@@ -147,7 +147,7 @@ char *ms_chunk_disassemble_all(ms_chunk *chunk) {
     uint64_t offset = 0;
     while (offset < chunk->bytecode.count) {
         char *line = ms_chunk_disassemble(chunk, &offset);
-        output = realloc(output, (output ? sizeof(output) : 0) + strlen(line) + 2);
+        output = output ? realloc(output, strlen(output) + strlen(line) + 2) : calloc(1, strlen(line) + 2);
         strcat(output, line);
         strcat(output, "\n");
         free(line);
