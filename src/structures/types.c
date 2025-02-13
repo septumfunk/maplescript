@@ -7,46 +7,46 @@
 char *ms_type_tostring(void *);
 char *ms_pointer_tostring(void *);
 
-void *ms_u8_add(void *);
-void *ms_u8_sub(void *);
+void *ms_u8_add(void *, void *);
+void *ms_u8_sub(void *, void *);
 char *ms_u8_tostring(void *);
 
-void *ms_u16_add(void *);
-void *ms_u16_sub(void *);
+void *ms_u16_add(void *, void *);
+void *ms_u16_sub(void *, void *);
 char *ms_u16_tostring(void *);
 
-void *ms_u32_add(void *);
-void *ms_u32_sub(void *);
+void *ms_u32_add(void *, void *);
+void *ms_u32_sub(void *, void *);
 char *ms_u32_tostring(void *);
 
-void *ms_u64_add(void *);
-void *ms_u64_sub(void *);
+void *ms_u64_add(void *, void *);
+void *ms_u64_sub(void *, void *);
 char *ms_u64_tostring(void *);
 
 
-void *ms_i8_add(void *);
-void *ms_i8_sub(void *);
+void *ms_i8_add(void *, void *);
+void *ms_i8_sub(void *, void *);
 char *ms_i8_tostring(void *);
 
-void *ms_i16_add(void *);
-void *ms_i16_sub(void *);
+void *ms_i16_add(void *, void *);
+void *ms_i16_sub(void *, void *);
 char *ms_i16_tostring(void *);
 
-void *ms_i32_add(void *);
-void *ms_i32_sub(void *);
+void *ms_i32_add(void *, void *);
+void *ms_i32_sub(void *, void *);
 char *ms_i32_tostring(void *);
 
-void *ms_i64_add(void *);
-void *ms_i64_sub(void *);
+void *ms_i64_add(void *, void *);
+void *ms_i64_sub(void *, void *);
 char *ms_i64_tostring(void *);
 
 
-void *ms_f32_add(void *);
-void *ms_f32_sub(void *);
+void *ms_f32_add(void *, void *);
+void *ms_f32_sub(void *, void *);
 char *ms_f32_tostring(void *);
 
-void *ms_f64_add(void *);
-void *ms_f64_sub(void *);
+void *ms_f64_add(void *, void *);
+void *ms_f64_sub(void *, void *);
 char *ms_f64_tostring(void *);
 
 const ms_type MS_PRIMITIVES[MS_PRIMITIVE_COUNT] = {
