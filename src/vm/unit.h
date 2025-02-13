@@ -34,6 +34,7 @@ void ms_unit_load_file(ms_unit *self, const char *path);
 
 uint64_t ms_unit_push_instruction(ms_unit *self, ms_opcode opcode, ...);
 void ms_unit_push_debug(ms_unit *self, uint64_t offset, uint64_t line_number);
+uint64_t ms_unit_push_constant(ms_unit *self, ms_primitive type, void *data);
 
 char *ms_unit_disassemble(ms_unit *chunk, uint64_t *offset);
 char *ms_unit_disassemble_all(ms_unit *chunk);

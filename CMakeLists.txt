@@ -14,10 +14,11 @@ add_executable(${PROJECT_NAME}
     src/structures/map.c
     src/structures/strings.c
     src/structures/vec.c
+    src/structures/types.c
+    src/structures/stack.c
 
     src/vm/unit.c
     src/vm/instructions.c
-    src/vm/types.c
     src/vm/vm.c
 )
 

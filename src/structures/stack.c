@@ -57,11 +57,15 @@ ms_result ms_stack_insert(ms_stack *self, ms_primitive type, void *data, int off
     return MS_RESULT_OK;
 }
 
-void ms_stack_pop(ms_stack *self) {
-    self->top -= ms_type_get(*--self->top)->size;
+void ms_stack_pop(ms_stack *self, uint64_t count) {
+    for (uint64_t i = 0; i < count; ++i)
+        self->top -= ms_type_get(*--self->top)->size;
 }
 
-void *_ms_stack_get(ms_stack *self, int offset) {
+ms_value *ms_stack_get(ms_stack *self, int offset) {
+    if (self->top == self->bottom)
+        return nullptr;
+
     uint8_t *b = self->top;
     b--;
     for (int i = 0; i < offset; ++i) {
@@ -70,5 +74,6 @@ void *_ms_stack_get(ms_stack *self, int offset) {
         b--;
     }
 
-    ms_type *type = ms_type_get(*b);
+    const ms_type *t = ms_type_get(*b);
+    return ms_value_new(*b, b + t->size);
 }

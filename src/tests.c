@@ -37,7 +37,7 @@ int ms_test_unit(ms_shared_test_data *test_data) {
     // Manual instructions
     ms_unit_push_debug(&test_data->unit, test_data->offset, 1);
     test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_CONSTANT, &(ms_pointer){0});
-    test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_CONSTANT, &(ms_pointer){1});
+    test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_CONSTANT, &(ms_pointer){(void *)0x1});
     ms_unit_push_debug(&test_data->unit, test_data->offset, 2);
     test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_RETURN);
 

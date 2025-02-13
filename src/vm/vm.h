@@ -1,10 +1,11 @@
 #pragma once
 #include "unit.h"
+#include "../structures/stack.h"
 
 typedef struct {
     ms_unit *unit;
     const uint8_t *ip;
-    ms_vec stack;
+    ms_stack stack;
 } ms_vm;
 
 ms_vm ms_vm_new();

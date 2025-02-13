@@ -1,13 +1,15 @@
 #pragma once
-#include "types.h"
+#include "../structures/types.h"
 #include <stdint.h>
 
 typedef enum : uint8_t {
-    MS_NO_OP,
-    MS_OP_CONSTANT,
+    MS_OP_NOOP,
+    MS_OP_LDCT,
+    MS_OP_RET,
+    MS_OP_PRNT,
+
     MS_OP_ADD,
-    MS_OP_SUBTRACT,
-    MS_OP_RETURN,
+    MS_OP_SUB,
 
     MS_OP_UNKNOWN,
     MS_OP_COUNT,

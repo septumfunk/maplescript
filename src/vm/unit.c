@@ -5,19 +5,22 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 ms_unit ms_unit_new() {
     return (ms_unit) {
         .bytecode = ms_vec_new(uint8_t),
-        .constants = ms_vec_new(ms_value),
+        .constants = ms_vec_new(ms_value *),
         .dbg_chunks = ms_vec_new(ms_debug_chunk),
     };
 }
 
 void ms_unit_delete(ms_unit *self) {
     ms_vec_delete(&self->bytecode);
-    ms_vec_delete(&self->constants)
+
+    for (uint64_t i = 0; i < self->constants.count; ++i)
+        ms_value_delete((ms_value *)ms_vec_get(&self->constants, ms_value *, i));
+    ms_vec_delete(&self->constants);
+
     ms_vec_delete(&self->dbg_chunks);
 }
 
@@ -72,6 +75,14 @@ void ms_unit_push_debug(ms_unit *self, uint64_t offset, uint64_t line_number) {
         .offset = offset,
         .line_number = line_number,
     });
+}
+
+uint64_t ms_unit_push_constant(ms_unit *self, ms_primitive type, void *data) {
+    ms_value *val = ms_value_new(type, data);
+    ms_vec_push(&self->constants, &val);
+    uint64_t offset = self->constants.count - 1;
+    ms_vec_append(&self->constants, data, ms_type_get(type)->size);
+    return offset;
 }
 
 char *ms_unit_disassemble(ms_unit *chunk, uint64_t *offset) {

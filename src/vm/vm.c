@@ -1,7 +1,7 @@
 #include "vm.h"
 #include "unit.h"
 #include "instructions.h"
-#include "types.h"
+#include "../structures/types.h"
 #include <assert.h>
 #include <stdatomic.h>
 #include <stdio.h>
