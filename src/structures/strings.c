@@ -28,3 +28,17 @@ char *ms_format(const char *format, ...) {
 
     return fmt;
 }
+
+char *ms_strcat(char *dst, const char *src) {
+    if (!dst)
+        dst = ms_calloc(1, strlen(src) + 1);
+    else {
+        uint64_t size = strlen(dst) + strlen(src) + 1;
+        dst = ms_realloc(dst, size);
+    }
+
+    strcat(dst, src);
+    dst[strlen(dst)] = 0;
+
+    return dst;
+}

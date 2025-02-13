@@ -7,6 +7,7 @@ project(maplescript C)
 
 add_executable(${PROJECT_NAME}
     src/main.c
+    src/tests.c
 
     src/memory/mem.c
 
@@ -14,16 +15,18 @@ add_executable(${PROJECT_NAME}
     src/structures/strings.c
     src/structures/vec.c
 
-    src/vm/chunk.c
+    src/vm/unit.c
     src/vm/instructions.c
+    src/vm/types.c
+    src/vm/vm.c
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
-    -Wall -Werror -Wextra -Wpedantic -Wconversion
-    -Wsign-conversion -Wshadow -Wformat=2
+    -Wall -Werror -Wextra -pedantic -Wconversion
+    -Wsign-conversion -Wformat=2 -Wundef
     -Wold-style-cast -Woverloaded-virtual
     -Wdouble-promotion -Wnon-virtual-dtor
-    -Wnull-dereference -Wstrict-overflow -Wundef
+    -Wnull-dereference -Wstrict-overflow
 )
 
 if(WIN32)

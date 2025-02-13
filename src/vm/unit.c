@@ -1,4 +1,4 @@
-#include "chunk.h"
+#include "unit.h"
 #include "instructions.h"
 #include "../structures/strings.h"
 #include <assert.h>
@@ -7,19 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-ms_chunk ms_chunk_new() {
-    return (ms_chunk) {
+ms_unit ms_unit_new() {
+    return (ms_unit) {
         .bytecode = ms_vec_new(uint8_t),
+        .constants = ms_vec_new(ms_value),
         .dbg_chunks = ms_vec_new(ms_debug_chunk),
     };
 }
 
-void ms_chunk_delete(ms_chunk *self) {
+void ms_unit_delete(ms_unit *self) {
     ms_vec_delete(&self->bytecode);
+    ms_vec_delete(&self->constants)
     ms_vec_delete(&self->dbg_chunks);
 }
 
-void ms_chunk_save(ms_chunk *self, const char *path) {
+void ms_unit_save(ms_unit *self, const char *path) {
     FILE *f = fopen(path, "w");
     if (f == nullptr) {
         fprintf(stderr, "Failed to open file '%s' for writing", path);
@@ -27,13 +29,13 @@ void ms_chunk_save(ms_chunk *self, const char *path) {
         return;
     }
 
-    uint64_t written = fwrite(&(ms_chunk_info) {
-        .header = MS_CHUNK_HEADER,
+    uint64_t written = fwrite(&(ms_unit_info) {
+        .header = MS_UNIT_HEADER,
         .version = MS_BYTECODE_VERSION,
-        .loc_constants = /*sizeof(ms_chunk_info)*/ 0,
-        .loc_bytecode = sizeof(ms_chunk_info),
-    }, sizeof(uint8_t), sizeof(ms_chunk_info), f);
-    if (written != sizeof(ms_chunk_info)) {
+        .loc_constants = /*sizeof(ms_unit_info)*/ 0,
+        .loc_bytecode = sizeof(ms_unit_info),
+    }, sizeof(uint8_t), sizeof(ms_unit_info), f);
+    if (written != sizeof(ms_unit_info)) {
         fprintf(stderr, "Failed to write chunk info to file '%s'", path);
         fclose(f);
         return;
@@ -48,33 +50,33 @@ void ms_chunk_save(ms_chunk *self, const char *path) {
     }
 }
 
-/*void ms_chunk_load(ms_chunk *self, const char *path) {
+/*void ms_unit_load_file(ms_unit *self, const char *path) {
 
 }*/
 
-uint64_t ms_chunk_push_instruction(ms_chunk *self, ms_opcode opcode, ...) {
+uint64_t ms_unit_push_instruction(ms_unit *self, ms_opcode opcode, ...) {
     ms_vec_push(&self->bytecode, &opcode);
 
     va_list arglist;
     va_start(arglist, format);
-        const ms_instruction *ins = &MS_INSTRUCTION_SET[opcode];
+        const ms_instruction *ins = ms_instruction_get(opcode);
         for (int i = 0; i < ins->operands.count; ++i)
-            ms_vec_append(&self->bytecode, va_arg(arglist, void *), ins->operands.array[i].size);
+            ms_vec_append(&self->bytecode, va_arg(arglist, void *), ins->operands.array[i].type->size);
     va_end(arglist);
 
     return self->bytecode.count - 1;
 }
 
-void ms_chunk_push_debug(ms_chunk *self, uint64_t offset, uint64_t line_number) {
+void ms_unit_push_debug(ms_unit *self, uint64_t offset, uint64_t line_number) {
     ms_vec_push(&self->dbg_chunks, &(ms_debug_chunk) {
         .offset = offset,
         .line_number = line_number,
     });
 }
 
-char *ms_chunk_disassemble(ms_chunk *chunk, uint64_t *offset) {
+char *ms_unit_disassemble(ms_unit *chunk, uint64_t *offset) {
     const ms_opcode *op = &ms_vec_get(&chunk->bytecode, ms_opcode, *offset);
-    const ms_instruction *ins = &MS_INSTRUCTION_SET[MS_OP_UNKNOWN];
+    const ms_instruction *ins = ms_instruction_get(MS_OP_UNKNOWN);
 
     const ms_debug_chunk *current_chunk = nullptr;
     while (chunk->dbg_chunks.count > 0 && chunk->dbg_index < chunk->dbg_chunks.count) {
@@ -97,59 +99,50 @@ char *ms_chunk_disassemble(ms_chunk *chunk, uint64_t *offset) {
     }
 
     if (*op < MS_OP_UNKNOWN) // Valid
-        ins = &MS_INSTRUCTION_SET[*op];
+        ins = ms_instruction_get(*op);
 
     char *output = ms_format("%04llu  ", *offset);
     if (current_chunk) {
         char *line_no = ms_format("[%03llu]  ", current_chunk->line_number);
-        output = realloc(output, strlen(output) + strlen(line_no) + 1);
-        strcat(output, line_no);
+        output = ms_strcat(output, line_no);
         free(line_no);
     }
-    output = realloc(output, strlen(output) + strlen(ins->asm_name) + 1);
-    strcat(output, ins->asm_name);
+    output = ms_strcat(output, ins->asm_name);
+    (*offset)++;
 
     for (int i = 0; i < ins->operands.count; ++i) {
-        if (i == 0) {
-            output = realloc(output, strlen(output) + 5);
-            strcat(output, "  [ ");
-        }
+        if (i == 0)
+            output = ms_strcat(output, "  [ ");
 
         ms_operand oprnd = ins->operands.array[i];
-        char *ops = ms_format("%s: 0x", oprnd.asm_name);
 
-        for (int j = 0; j < oprnd.size; ++j) {
-            uint8_t b = ms_vec_get(&chunk->bytecode, uint8_t, (*offset)++);
-            char *hex = ms_format("%02X", b);
-            ops = realloc(ops, strlen(ops) + strlen(hex) + 1);
-            strcat(ops, hex);
-            free(hex);
-        }
+        char *param = ms_format("%s: ", oprnd.asm_name);
+        output = ms_strcat(output, param);
+        free(param);
 
-        output = realloc(output, strlen(output) + strlen(ops) + 1);
-        strcat(output, ops);
+        char *ops = oprnd.type->tostring((void *)&ms_vec_get(&chunk->bytecode, uint8_t, *offset));
+        output = ms_strcat(output, ops);
         free(ops);
 
-        output = realloc(output, strlen(output) + 3);
         if (i == ins->operands.count - 1)
-            strcat(output, " ]");
+            output = ms_strcat(output, " ]");
         else
-            strcat(output, ", ");
+            output = ms_strcat(output, ", ");
+
+        *offset += oprnd.type->size;
     }
 
-    (*offset)++;
     return output;
 }
 
-char *ms_chunk_disassemble_all(ms_chunk *chunk) {
+char *ms_unit_disassemble_all(ms_unit *chunk) {
     char *output = nullptr;
 
     uint64_t offset = 0;
     while (offset < chunk->bytecode.count) {
-        char *line = ms_chunk_disassemble(chunk, &offset);
-        output = output ? realloc(output, strlen(output) + strlen(line) + 2) : calloc(1, strlen(line) + 2);
-        strcat(output, line);
-        strcat(output, "\n");
+        char *line = ms_unit_disassemble(chunk, &offset);
+        output = ms_strcat(output, line);
+        output = ms_strcat(output, "\n");
         free(line);
     }
 

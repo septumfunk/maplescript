@@ -2,11 +2,10 @@ CompileFlags:
     CompilationDatabase: out/debug/
     Add: [
         -std=c23,
-        -xc,
         -Wall -Wextra -Wpedantic -Wconversion
-        -Wsign-conversion -Wshadow -Wformat=2
+        -Wsign-conversion -Wformat=2 -Wundef
         -Wold-style-cast -Woverloaded-virtual
         -Wdouble-promotion -Wnon-virtual-dtor
-        -Wnull-dereference -Wstrict-overflow -Wundef
+        -Wnull-dereference -Wstrict-overflow
     ]
     Compiler: clang

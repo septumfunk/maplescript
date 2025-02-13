@@ -32,15 +32,18 @@ void ms_vec_push(ms_vec *self, void *data) {
 
     memcpy(self->data + self->count * self->element_size, data, self->element_size);
     self->count++;
+
+    self->top = self->data + self->count;
 }
 
 void ms_vec_append(ms_vec *self, void *data, uint64_t count) {
     size_t new_size = (self->count + count + 7) & ~(uint64_t)7; // Round to nearest greater multiple of 8.
     if (new_size > self->slots)
-        self->data = ms_realloc(self->data, new_size);
+        self->data = self->data ? ms_realloc(self->data, new_size) : ms_calloc(1, new_size);
 
     memcpy(self->data + self->count, data, count * self->element_size);
     self->count += count;
+    self->top = self->data + self->count;
 }
 
 void *ms_vec_pop(ms_vec *self) {
@@ -53,6 +56,7 @@ void *ms_vec_pop(ms_vec *self) {
     if (self->slots > MS_VEC_INITIAL_SIZE && self->count <= self->slots / 2) // Reduce size if possible
         self->data = ms_realloc(self->data, self->slots /= 2);
 
+    self->top = self->data + self->count;
     return new_data;
 }
 
@@ -69,6 +73,8 @@ void ms_vec_insert(ms_vec *self, uint64_t index, void *data) {
 
     memcpy(self->data + (index + 1) * self->element_size, self->data + index * self->element_size, self->element_size * (self->count - index - 1));
     memcpy(self->data + index * self->element_size, data, self->element_size);
+
+    self->top = self->data + self->count;
 }
 
 void ms_vec_set(ms_vec *self, uint64_t index, void *data) {
@@ -88,4 +94,5 @@ void ms_vec_remove(ms_vec *self, uint64_t index) {
         memcpy(self->data + index * self->element_size, self->data + (index + 1) * self->element_size, self->count - index);
     if (self->slots > MS_VEC_INITIAL_SIZE && self->count <= self->slots / 2) // Reduce size if possible
         self->data = ms_realloc(self->data, self->slots /= 2);
+    self->top = self->data + self->count;
 }

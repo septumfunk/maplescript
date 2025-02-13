@@ -1,7 +1,9 @@
 #pragma once
+#include "types.h"
 #include <stdint.h>
 
 typedef enum : uint8_t {
+    MS_NO_OP,
     MS_OP_CONSTANT,
     MS_OP_ADD,
     MS_OP_SUBTRACT,
@@ -13,5 +15,5 @@ typedef enum : uint8_t {
 
 typedef struct {
     const char *asm_name;
-    uint8_t size;
+    const ms_type *const type;
 } ms_operand;

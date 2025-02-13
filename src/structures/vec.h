@@ -7,10 +7,11 @@
 /// and the size of the vec may not always be equal to the amount of
 /// elements in it.
 typedef struct {
-    size_t const element_size; /// The size of an individual element in the vec.
+    size_t element_size; /// The size of an individual element in the vec.
     uint64_t slots; /// The amount of currently available slots.
     uint64_t count; /// The amount of currently used slots.
     uint8_t *data; /// A series of sequential bytes representing vec elements.
+    uint8_t *top; /// The byte directly after the very last element of the vector.
 } ms_vec;
 
 /// Creates a new vec with a specified element size.
