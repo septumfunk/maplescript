@@ -8,7 +8,7 @@
 
             "cwd": "${workspaceRoot}",
             "program": "${workspaceRoot}/out/debug/${fileWorkspaceFolderBasename}",
-
+            "console": "integratedTerminal"
         },
     ]
 }

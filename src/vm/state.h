@@ -6,8 +6,14 @@
 #define MS_DEBUG
 
 typedef struct {
+    char *str;
+    ms_byte *ins_s;
+} ms_runtime_error;
+
+typedef struct {
     ms_unit *unit;
     ms_byte *ip;
+    char *err;
 
     ms_stack stack;
     ms_vec usertypes;
@@ -23,3 +29,5 @@ ms_pvalue ms_loadconst(ms_state *state, ms_integer offset);
 
 const ms_pdata *ms_type(ms_state *state, ms_integer offset);
 void ms_print(ms_state *state, ms_integer offset);
+
+void ms_error(ms_state *state, const char *format, ...);

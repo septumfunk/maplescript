@@ -3,6 +3,7 @@
 #include "state.h"
 #include "../data/strings.h"
 #include <assert.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,9 +37,12 @@ ms_status ms_dounit(ms_state *state, ms_unit *unit) {
 
         ms_status res = ins->operation(state);
         if (res == MS_STATUS_RUNTIME_ERROR) {
-            // Log runtime error disassembly.
-            char *dasm = ms_ins_disassemble(unit, &state->ip);
-            fprintf(stderr, "Maplescript runtime error:\n%s\n", dasm);
+            char *dasm = ms_ins_disassemble(unit, &(ms_byte *){ins_s});
+            fprintf(stderr, "[%s]\n", dasm);
+            free(dasm);
+
+            fprintf(stderr, " ^\n %s\n", state->err);
+            free(state->err);
             goto runtime_error;
         }
         if (res == MS_STATUS_RETURN) {
@@ -172,6 +176,12 @@ ms_status ms_ins_ret(ms_state *state) {
 }
 
 ms_status ms_ins_prnt(ms_state *state) {
+    auto val = ms_get(state, -2);
+    if (!ms_pdata_get(val.pt)->op.string) {
+        ms_error(state, "Type %s does not implement string.", ms_pdata_get(val.pt)->name);
+        return MS_STATUS_RUNTIME_ERROR;
+    }
+
     ms_print(state, -1);
     return MS_STATUS_OK;
 }
@@ -179,6 +189,17 @@ ms_status ms_ins_prnt(ms_state *state) {
 ms_status ms_ins_add(ms_state *state) {
     auto val1 = ms_get(state, -2);
     auto val2 = ms_get(state, -1);
+
+    if (val1.pt != val2.pt) {
+        ms_error(state, "Cannot add values of different types (%s, %s).", ms_pdata_get(val1.pt)->name, ms_pdata_get(val2.pt)->name);
+        return MS_STATUS_RUNTIME_ERROR;
+    }
+
+    if (!ms_pdata_get(val1.pt)->op.add) {
+        ms_error(state, "Type %s does not implement add.", ms_pdata_get(val1.pt)->name);
+        return MS_STATUS_RUNTIME_ERROR;
+    }
+
     ms_pop(state, 2);
 
     ms_push(state, ms_pdata_get(val1.pt)->op.add(val1, val2));
@@ -189,6 +210,17 @@ ms_status ms_ins_add(ms_state *state) {
 ms_status ms_ins_sub(ms_state *state) {
     auto val1 = ms_get(state, -2);
     auto val2 = ms_get(state, -1);
+
+    if (val1.pt != val2.pt) {
+        ms_error(state, "Cannot subtract values of different types (%s, %s).", ms_pdata_get(val1.pt)->name, ms_pdata_get(val2.pt)->name);
+        return MS_STATUS_RUNTIME_ERROR;
+    }
+
+    if (!ms_pdata_get(val1.pt)->op.add) {
+        ms_error(state, "Type %s does not implement sub.", ms_pdata_get(val1.pt)->name);
+        return MS_STATUS_RUNTIME_ERROR;
+    }
+
     ms_pop(state, 2);
 
     ms_push(state, ms_pdata_get(val1.pt)->op.sub(val1, val2));

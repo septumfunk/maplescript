@@ -33,7 +33,7 @@ int ms_test_unit(ms_shared_test_data *test_data) {
     test_data->unit = ms_unit_new();
 
     auto n1 = ms_unit_push_constant(&test_data->unit, MS_P_NUMBER, &(ms_number) { 4.20 });
-    auto n2 = ms_unit_push_constant(&test_data->unit, MS_P_NUMBER, &(ms_number) { 69 });
+    auto n2 = ms_unit_push_constant(&test_data->unit, MS_P_INTEGER, &(ms_integer) { 69 });
 
     ms_ins_push(&test_data->unit, MS_OP_LDCT, &n1);
     ms_ins_push(&test_data->unit, MS_OP_LDCT, &n2);
@@ -53,8 +53,7 @@ int ms_test_disassemble(ms_shared_test_data *test_data) {
 }
 
 int ms_test_run(ms_shared_test_data *test_data) {
-    ms_dounit(test_data->state, &test_data->unit);
-    return EXIT_SUCCESS;
+    return ms_dounit(test_data->state, &test_data->unit);
 }
 
 //! Execution
@@ -84,6 +83,7 @@ int ms_run_tests(int argc, char **argv) {
         int status = t->function(&test_data);
         fprintf(status ? stderr : stdout, "[TEST] Test '%s' exited with status %d.\n", t->test_name, status);
         printf("==========================================================\n");
+        test_data.tests_failed += (status ? 1 : 0);
     }
     printf("[TEST] All tests completed. %llu/%llu tests failed.\n", test_data.tests_failed, test_data.test_count);
 
