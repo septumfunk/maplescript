@@ -9,17 +9,16 @@ add_executable(${PROJECT_NAME}
     src/main.c
     src/tests.c
 
-    src/memory/mem.c
+    src/data/map.c
+    src/data/strings.c
+    src/data/vec.c
 
-    src/structures/map.c
-    src/structures/strings.c
-    src/structures/vec.c
-    src/structures/types.c
-    src/structures/stack.c
+    src/memory/alloc.c
+    src/memory/stack.c
 
-    src/vm/unit.c
-    src/vm/instructions.c
-    src/vm/vm.c
+    src/vm/bytecode.c
+    src/vm/instruction.c
+    src/vm/state.c
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE

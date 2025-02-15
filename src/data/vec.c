@@ -1,5 +1,5 @@
 #include "vec.h"
-#include "../memory/mem.h"
+#include "../memory/alloc.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +38,10 @@ void ms_vec_push(ms_vec *self, void *data) {
 
 void ms_vec_append(ms_vec *self, void *data, uint64_t count) {
     size_t new_size = (self->count + count + 7) & ~(uint64_t)7; // Round to nearest greater multiple of 8.
-    if (new_size > self->slots)
+    if (new_size > self->slots) {
+        self->slots = new_size;
         self->data = self->data ? ms_realloc(self->data, new_size) : ms_calloc(1, new_size);
+    }
 
     memcpy(self->data + self->count, data, count * self->element_size);
     self->count += count;

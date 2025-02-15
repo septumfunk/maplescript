@@ -1,5 +1,5 @@
 #include "strings.h"
-#include "../memory/mem.h"
+#include "../memory/alloc.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>

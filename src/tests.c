@@ -1,8 +1,7 @@
 #include "tests.h"
-#include "structures/map.h"
-#include "structures/types.h"
-#include "vm/unit.h"
-#include "vm/vm.h"
+#include "vm/bytecode.h"
+#include "vm/instruction.h"
+#include "vm/state.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -23,48 +22,38 @@ typedef struct ms_shared_test_data {
     // Extra
     int argc;
     char **argv;
-
     ms_unit unit;
-    uint64_t offset;
+    ms_state *state;
 } ms_shared_test_data;
 
 //* Tests
 
 int ms_test_unit(ms_shared_test_data *test_data) {
+    test_data->state = ms_state_new();
     test_data->unit = ms_unit_new();
-    test_data->offset = 0;
 
-    // Manual instructions
-    ms_unit_push_debug(&test_data->unit, test_data->offset, 1);
-    test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_CONSTANT, &(ms_pointer){0});
-    test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_CONSTANT, &(ms_pointer){(void *)0x1});
-    ms_unit_push_debug(&test_data->unit, test_data->offset, 2);
-    test_data->offset = ms_unit_push_instruction(&test_data->unit, MS_OP_RETURN);
+    auto n1 = ms_unit_push_constant(&test_data->unit, MS_P_NUMBER, &(ms_number) { 4.20 });
+    auto n2 = ms_unit_push_constant(&test_data->unit, MS_P_NUMBER, &(ms_number) { 69 });
+
+    ms_ins_push(&test_data->unit, MS_OP_LDCT, &n1);
+    ms_ins_push(&test_data->unit, MS_OP_LDCT, &n2);
+    ms_ins_push(&test_data->unit, MS_OP_ADD);
+    ms_ins_push(&test_data->unit, MS_OP_PRNT);
+    ms_ins_push(&test_data->unit, MS_OP_RET);
 
     return EXIT_SUCCESS;
 }
 
 int ms_test_disassemble(ms_shared_test_data *test_data) {
-    char *dasm = ms_unit_disassemble_all(&test_data->unit);
+    char *dasm = ms_ins_disassemble_all(&test_data->unit);
     printf("%s\n", dasm);
     free(dasm);
 
     return EXIT_SUCCESS;
 }
 
-int ms_test_execute_unit(ms_shared_test_data *test_data) {
-    ms_vm vm = ms_vm_new();
-    return ms_vm_dounit(&vm, &test_data->unit) == MS_RESULT_RUNTIME_ERROR;
-}
-
-int ms_test_map(ms_shared_test_data *test_data) {
-    (void)test_data;
-
-    ms_map map = ms_map_new();
-    ms_map_insert(&map, "test", &(float){3.14159f});
-    printf("%f", (double)ms_map_get(&map, float, "test"));
-    ms_map_delete(&map);
-
+int ms_test_run(ms_shared_test_data *test_data) {
+    ms_dounit(test_data->state, &test_data->unit);
     return EXIT_SUCCESS;
 }
 
@@ -75,8 +64,7 @@ int ms_run_tests(int argc, char **argv) {
     static const ms_test tests_to_run[] = {
         ms_test_func(ms_test_unit),
         ms_test_func(ms_test_disassemble),
-        ms_test_func(ms_test_execute_unit),
-        ms_test_func(ms_test_map),
+        ms_test_func(ms_test_run),
     };
 
     // Shared data

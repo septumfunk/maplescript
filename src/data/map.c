@@ -1,5 +1,5 @@
 #include "map.h"
-#include "../memory/mem.h"
+#include "../memory/alloc.h"
 #include "strings.h"
 #include <assert.h>
 #include <stdio.h>
