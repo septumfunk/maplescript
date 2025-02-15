@@ -24,10 +24,14 @@ void ms_state_delete(ms_state *state);
 
 ms_byte *ms_push(ms_state *state, ms_pvalue value);
 void ms_pop(ms_state *state, ms_integer count);
-ms_pvalue ms_get(ms_state *state, ms_integer offset);
-ms_pvalue ms_loadconst(ms_state *state, ms_integer offset);
+ms_pvalue ms_get(ms_state *state, ms_integer reg);
+void ms_set(ms_state *state, ms_integer reg, ms_pvalue value);
+ms_pvalue ms_loadconst(ms_state *state, ms_integer index);
 
-const ms_pdata *ms_type(ms_state *state, ms_integer offset);
-void ms_print(ms_state *state, ms_integer offset);
+const ms_pdata *ms_type(ms_state *state, ms_integer reg);
+void ms_print(ms_state *state, ms_integer reg);
 
 void ms_error(ms_state *state, const char *format, ...);
+
+ms_pointer ms_vcalloc(ms_state *state, ms_integer size);
+void ms_vfree(ms_state *state, ms_pointer ptr);

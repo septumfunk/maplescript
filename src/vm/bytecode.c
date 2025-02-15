@@ -1,11 +1,31 @@
 #include "bytecode.h"
 #include "../data/strings.h"
+#include "../data/fs.h"
+#include "../memory/alloc.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 char *ms_pbyte_string(ms_pvalue self) {
     return ms_format("%02X", self.value.byte);
+}
+
+ms_pvalue ms_pbyte_conv(ms_pvalue self) {
+    switch (self.pt) {
+        case MS_P_NUMBER:
+            self.value.byte = (ms_byte)self.value.number;
+            break;
+        case MS_P_INTEGER:
+            self.value.byte = (ms_byte)self.value.integer;
+            break;
+        case MS_P_POINTER:
+            self.value.byte = (ms_byte)(ms_integer)self.value.pointer;
+        default: break;
+    }
+    self.pt = MS_P_BYTE;
+
+    return self;
 }
 
 char *ms_pnum_string(ms_pvalue self) {
@@ -26,6 +46,23 @@ ms_pvalue ms_pnum_sub(ms_pvalue obj1, ms_pvalue obj2) {
     };
 }
 
+ms_pvalue ms_pnum_conv(ms_pvalue self) {
+    switch (self.pt) {
+        case MS_P_BYTE:
+            self.value.number = self.value.byte;
+            break;
+        case MS_P_INTEGER:
+            self.value.number = (ms_number)self.value.integer;
+            break;
+        case MS_P_POINTER:
+            self.value.number = (ms_number)(ms_integer)self.value.pointer;
+        default: break;
+    }
+    self.pt = MS_P_NUMBER;
+
+    return self;
+}
+
 char *ms_pint_string(ms_pvalue self) {
     return ms_format("%lld", self.value.integer);
 }
@@ -42,6 +79,23 @@ ms_pvalue ms_pint_sub(ms_pvalue obj1, ms_pvalue obj2) {
         .pt = MS_P_INTEGER,
         .value.integer = obj1.value.integer - obj2.value.integer,
     };
+}
+
+ms_pvalue ms_pint_conv(ms_pvalue self) {
+    switch (self.pt) {
+        case MS_P_BYTE:
+            self.value.integer = self.value.byte;
+            break;
+        case MS_P_NUMBER:
+            self.value.integer = (ms_integer)self.value.number;
+            break;
+        case MS_P_POINTER:
+            self.value.integer = (ms_integer)self.value.pointer;
+        default: break;
+    }
+    self.pt = MS_P_INTEGER;
+
+    return self;
 }
 
 char *ms_pptr_string(ms_pvalue self) {
@@ -62,6 +116,23 @@ ms_pvalue ms_pptr_sub(ms_pvalue obj1, ms_pvalue obj2) {
     };
 }
 
+ms_pvalue ms_pptr_conv(ms_pvalue self) {
+    switch (self.pt) {
+        case MS_P_BYTE:
+            self.value.pointer = (ms_pointer)(ms_integer)self.value.byte;
+            break;
+        case MS_P_NUMBER:
+            self.value.pointer = (ms_pointer)(ms_integer)self.value.number;
+            break;
+        case MS_P_INTEGER:
+            self.value.pointer = (ms_pointer)self.value.integer;
+        default: break;
+    }
+    self.pt = MS_P_POINTER;
+
+    return self;
+}
+
 const struct ms_pdata MS_PRIMITIVES[MS_P_COUNT] = {
     [MS_P_BYTE] = {
         .pt = MS_P_BYTE,
@@ -69,6 +140,12 @@ const struct ms_pdata MS_PRIMITIVES[MS_P_COUNT] = {
         .size = sizeof(ms_byte),
         .op = {
             .string = ms_pbyte_string,
+
+            .convert = {
+                [MS_P_NUMBER] = ms_pnum_conv,
+                [MS_P_POINTER] = ms_pptr_conv,
+                [MS_P_INTEGER] = ms_pint_conv,
+            },
         },
     },
     [MS_P_NUMBER] = {
@@ -79,6 +156,12 @@ const struct ms_pdata MS_PRIMITIVES[MS_P_COUNT] = {
             .string = ms_pnum_string,
             .add = ms_pnum_add,
             .sub = ms_pnum_sub,
+
+            .convert = {
+                [MS_P_BYTE] = ms_pbyte_conv,
+                [MS_P_INTEGER] = ms_pint_conv,
+                [MS_P_POINTER] = ms_pptr_conv,
+            },
         }
     },
     [MS_P_INTEGER] = {
@@ -89,6 +172,12 @@ const struct ms_pdata MS_PRIMITIVES[MS_P_COUNT] = {
             .string = ms_pint_string,
             .add = ms_pint_add,
             .sub = ms_pint_sub,
+
+            .convert = {
+                [MS_P_BYTE] = ms_pbyte_conv,
+                [MS_P_NUMBER] = ms_pnum_conv,
+                [MS_P_POINTER] = ms_pptr_conv,
+            },
         }
     },
     [MS_P_POINTER] = {
@@ -99,6 +188,12 @@ const struct ms_pdata MS_PRIMITIVES[MS_P_COUNT] = {
             .string = ms_pptr_string,
             .add = ms_pptr_add,
             .sub = ms_pptr_sub,
+
+            .convert = {
+                [MS_P_BYTE] = ms_pbyte_conv,
+                [MS_P_NUMBER] = ms_pnum_conv,
+                [MS_P_INTEGER] = ms_pint_conv,
+            },
         }
     },
 };
@@ -108,6 +203,7 @@ ms_unit ms_unit_new() {
         .bytecode = ms_vec_new(uint8_t),
         .constants = ms_vec_new(ms_pvalue),
         .dbg_chunks = ms_vec_new(ms_debug_chunk),
+        .entry = 0,
     };
 }
 
@@ -118,37 +214,81 @@ void ms_unit_delete(ms_unit *self) {
 }
 
 void ms_unit_save(ms_unit *self, const char *path) {
-    FILE *f = fopen(path, "w");
+    FILE *f = fopen(path, "wb");
     if (f == nullptr) {
         fprintf(stderr, "Failed to open file '%s' for writing", path);
-        fclose(f);
         return;
     }
 
-    uint64_t written = fwrite(&(ms_unit_info) {
+    size_t constants_size = 0;
+    for (uint64_t i = 0; i < self->constants.count; ++i) {
+        ms_pvalue val = ms_unit_get_constant(self, i);
+        constants_size +=  sizeof(val.pt) + ms_pdata_get(val.pt)->size;
+    }
+
+    size_t bytecode_size = self->bytecode.count;
+    size_t buffer_size = sizeof(ms_unit_info) + constants_size + bytecode_size;
+    uint8_t *buffer = ms_calloc(1, buffer_size);
+    ms_unit_info header = {
         .header = MS_UNIT_HEADER,
         .version = MS_BYTECODE_VERSION,
-        .loc_constants = /*sizeof(ms_unit_info)*/ 0,
-        .loc_bytecode = sizeof(ms_unit_info),
-    }, sizeof(uint8_t), sizeof(ms_unit_info), f);
-    if (written != sizeof(ms_unit_info)) {
-        fprintf(stderr, "Failed to write chunk info to file '%s'", path);
-        fclose(f);
-        return;
+        .loc_constants = sizeof(ms_unit_info), // After Header
+        .loc_bytecode = sizeof(ms_unit_info) + constants_size,
+        .entry = self->entry,
+    };
+    memcpy(buffer, &header, sizeof(ms_unit_info));
+
+    uint8_t *write = buffer + sizeof(ms_unit_info);
+    for (uint64_t i = 0; i < self->constants.count; ++i) {
+        ms_pvalue val = ms_unit_get_constant(self, i);
+        memcpy(write, &val.pt, sizeof(val.pt));
+        write += sizeof(val.pt);
+        memcpy(write, &val.value, ms_pdata_get(val.pt)->size);
+        write += ms_pdata_get(val.pt)->size;
     }
 
-    // TODO: constants
+    memmove(buffer + header.loc_bytecode, self->bytecode.data, bytecode_size);
 
-    if (fwrite(self->bytecode.data, self->bytecode.element_size, self->bytecode.count, f) != self->bytecode.element_size * self->bytecode.count) {
-        fprintf(stderr, "Failed to write bytecode to file '%s'", path);
-        fclose(f);
-        return;
-    }
+    if (fwrite(buffer, sizeof(uint8_t), buffer_size, f) != buffer_size)
+        fprintf(stderr, "Failed to save bytecode unit to file '%s'", path);
+
+    free(buffer);
+    fclose(f);
 }
 
-/*void ms_unit_load_file(ms_unit *self, const char *path) {
+ms_status ms_unit_load_file(ms_unit *self, const char *path) {
+    *self = ms_unit_new();
 
-}*/
+    size_t filesize = 0;
+    uint8_t *file = ms_file(path, &filesize);
+    if (!file)
+        return MS_STATUS_RUNTIME_ERROR;
+
+    ms_unit_info header = *(ms_unit_info *)file;
+
+    uint8_t *constants = file + header.loc_constants;
+    size_t constant_size = header.loc_bytecode - header.loc_constants;
+    uint8_t *bytecode = file + header.loc_bytecode;
+    size_t bytecode_size = filesize - constant_size - sizeof(header);
+
+    if ((constant_size > UINT64_MAX - bytecode_size) || (sizeof(header) + constant_size + bytecode_size != filesize)) {
+        fprintf(stderr, "Invalid maple unit file.\n");
+        free(file);
+        return MS_STATUS_RUNTIME_ERROR;
+    }
+
+    while (constants < bytecode) {
+        enum ms_ptag pt = *constants++;
+        ms_unit_push_constant(self, pt, constants);
+        constants += ms_pdata_get(pt)->size;
+    }
+    ms_vec_append(&self->bytecode, bytecode, bytecode_size);
+    free(file);
+
+    self->entry = header.entry;
+
+    return MS_STATUS_OK;
+}
 
 void ms_unit_push_debug(ms_unit *self, uint64_t offset, uint64_t line_number) {
     ms_vec_push(&self->dbg_chunks, &(ms_debug_chunk) {

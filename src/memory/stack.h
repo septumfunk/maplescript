@@ -19,3 +19,6 @@ void _ms_stack_pop(ms_stack *self, uint64_t count, size_t step_size);
 
 void *_ms_stack_get(ms_stack *self, int64_t offset, uint32_t step_size);
 #define ms_stack_get(self, offset, type) (type *)_ms_stack_get(self, offset, sizeof(type))
+void _ms_stack_set(ms_stack *self, int64_t offset, uint32_t step_size, void *value);
+#define ms_stack_set(self, offset, value) _ms_stack_set(self, offset, sizeof(*value), value)
+

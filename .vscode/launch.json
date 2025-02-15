@@ -3,12 +3,31 @@
         {
             "type": "cppvsdbg",
             "request": "launch",
-            "name": "Launch (Debug)",
+            "name": "Build ASM",
             "preLaunchTask": "CMake: configure and build",
 
             "cwd": "${workspaceRoot}",
             "program": "${workspaceRoot}/out/debug/${fileWorkspaceFolderBasename}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "args": [
+                "asm",
+                "build",
+                "test.ms"
+            ]
+        },
+        {
+            "type": "cppvsdbg",
+            "request": "launch",
+            "name": "Test ASM",
+            "preLaunchTask": "CMake: configure and build",
+
+            "cwd": "${workspaceRoot}",
+            "program": "${workspaceRoot}/out/debug/${fileWorkspaceFolderBasename}",
+            "console": "integratedTerminal",
+            "args": [
+                "run",
+                "test.maple"
+            ]
         },
     ]
 }

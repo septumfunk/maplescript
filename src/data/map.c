@@ -84,7 +84,7 @@ void ms_map_rehash(ms_map *self, uint64_t new_bucket_count) {
 }
 
 void _ms_map_insert(ms_map *self, const char *key, void *value, size_t size) {
-    if (!self->buckets || self->bucket_count) {
+    if (!self->buckets || !self->bucket_count) {
         self->buckets = ms_calloc(MS_MAP_DEFAULT_BUCKETS, sizeof(ms_key_value *));
         self->bucket_count = MS_MAP_DEFAULT_BUCKETS;
     }
@@ -105,6 +105,7 @@ void _ms_map_insert(ms_map *self, const char *key, void *value, size_t size) {
         },
     }, sizeof(ms_key_value));
     self->buckets[hash] = ms_push_kv(self->buckets[hash], pair);
+    self->pair_count++;
 }
 
 const void *_ms_map_get(ms_map *self, const char *key) {
@@ -113,8 +114,6 @@ const void *_ms_map_get(ms_map *self, const char *key) {
 
     ms_key_value *seek = self->buckets[hash];
     while (seek) {
-        printf("%s\n", key);
-        printf("%s\n", seek->key);
         if (ms_strcmp(key, seek->key))
             break;
         seek = seek->next;
@@ -139,9 +138,13 @@ void ms_map_remove(ms_map *self, const char *key) {
         seek_p = seek;
         seek = seek->next;
     }
+    self->pair_count--;
 }
 
 bool ms_map_exists(ms_map *self, const char *key) {
+    if (self->bucket_count == 0)
+        return false;
+
     uint32_t hash = ms_fnv1a(key, strlen(key), SEED) & (self->bucket_count - 1);
     ms_key_value *seek = self->buckets[hash];
     while (seek) {
@@ -151,4 +154,14 @@ bool ms_map_exists(ms_map *self, const char *key) {
     }
 
     return seek ? true : false;
+}
+
+void ms_map_foreach(ms_map *self, void (*func)(void *ud, ms_key_value *pair), void *ud) {
+    for (uint64_t i = 0; i < self->bucket_count; ++i) {
+        ms_key_value *p = self->buckets[i];
+        while (p) {
+            func(ud, p);
+            p = p->next;
+        }
+    }
 }

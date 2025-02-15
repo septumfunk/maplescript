@@ -38,20 +38,24 @@ void ms_pop(ms_state *state, ms_integer count) {
     ms_stack_pop(&state->stack, (uint64_t)count, ms_pvalue);
 }
 
-ms_pvalue ms_get(ms_state *state, ms_integer offset) {
-    return *ms_stack_get(&state->stack, offset, ms_pvalue);
+ms_pvalue ms_get(ms_state *state, ms_integer reg) {
+    return *ms_stack_get(&state->stack, reg, ms_pvalue);
 }
 
-ms_pvalue ms_loadconst(ms_state *state, ms_integer offset) {
-    return ms_unit_get_constant(state->unit, (uint64_t)offset);
+void ms_set(ms_state *state, ms_integer reg, ms_pvalue value) {
+    ms_stack_set(&state->stack, reg, &value);
 }
 
-const ms_pdata *ms_type(ms_state *state, ms_integer offset) {
-    return ms_pdata_get(ms_get(state, offset).pt);
+ms_pvalue ms_loadconst(ms_state *state, ms_integer index) {
+    return ms_unit_get_constant(state->unit, (uint64_t)index);
 }
 
-void ms_print(ms_state *state, ms_integer offset) {
-    ms_pvalue val = ms_get(state, offset);
+const ms_pdata *ms_type(ms_state *state, ms_integer reg) {
+    return ms_pdata_get(ms_get(state, reg).pt);
+}
+
+void ms_print(ms_state *state, ms_integer reg) {
+    ms_pvalue val = ms_get(state, reg);
     char *str = ms_pdata_get(val.pt)->op.string(val);
     printf("PRNT %s\n", str);
     free(str);

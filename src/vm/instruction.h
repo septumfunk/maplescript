@@ -2,16 +2,10 @@
 #include "bytecode.h"
 #include "state.h"
 
-typedef enum {
-    MS_STATUS_OK,
-    MS_STATUS_RETURN,
-    MS_STATUS_COMPILE_ERROR,
-    MS_STATUS_RUNTIME_ERROR,
-} ms_status;
-
 typedef ms_status (*ms_operation)(ms_state *state);
 
 typedef struct {
+    ms_opcode opcode;
     ms_operation operation;
     const char *const asm_name;
     const struct {

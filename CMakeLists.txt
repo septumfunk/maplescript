@@ -9,6 +9,10 @@ add_executable(${PROJECT_NAME}
     src/main.c
     src/tests.c
 
+    src/cli/arg.c
+    src/cli/assembler.c
+
+    src/data/fs.c
     src/data/map.c
     src/data/strings.c
     src/data/vec.c
@@ -16,6 +20,7 @@ add_executable(${PROJECT_NAME}
     src/memory/alloc.c
     src/memory/stack.c
 
+    src/vm/asm.c
     src/vm/bytecode.c
     src/vm/instruction.c
     src/vm/state.c

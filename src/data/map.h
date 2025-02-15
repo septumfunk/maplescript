@@ -43,3 +43,5 @@ const void *_ms_map_get(ms_map *self, const char *key);
 bool ms_map_exists(ms_map *self, const char *key);
 /// Remove and free a value from a map by its key.
 void ms_map_remove(ms_map *self, const char *key);
+
+void ms_map_foreach(ms_map *self, void (*func)(void *ud, ms_key_value *pair), void *ud);
